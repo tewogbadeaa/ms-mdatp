@@ -5,6 +5,20 @@
   remote_user: testadmin
 
   tasks:
+    - name: Add Microsoft apt repository for MDATP
+      apt_repository:
+        repo: "deb [arch=arm64,armhf,amd64] https://packages.microsoft.com/ubuntu/20.04/prod focal main"
+        update_cache: yes
+        state: present
+        filename: "microsoft-prod"
+      when: ansible_os_family == "Debian"
+
+    - name: Add Microsoft APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://packages.microsoft.com/debian/10/prod buster main
+        update_cache: yes
+        state: present
+      when: ansible_os_family == "Debian"
     - name: Update apt package cache (for Debian/Ubuntu)
       apt:
         update_cache: yes
@@ -63,6 +77,11 @@
         name: unzip
         state: present
 
+    - name: Install git
+      apt:
+        name: git
+        state: present
+
     - name: Download mde-netfilter .deb package
       get_url:
         url: "https://packages.microsoft.com/ubuntu/20.04/prod/pool/main/m/mde-netfilter/mde-netfilter_100.69.62.amd64.deb"  # Replace with the actual URL
@@ -86,20 +105,30 @@
         path: /etc/opt/microsoft/mdatp/mdatp_onboard.json
       register: mdatp_onboard
 
-    - name: Copy WindowsDefenderATPOnboardingPackage.zip to remote host
-      copy:
-        src: ~/WindowsDefenderATPOnboardingPackage.zip
-        dest: /tmp/WindowsDefenderATPOnboardingPackage.zip
-      when: not mdatp_onboard.stat.exists
+    # - name: Copy WindowsDefenderATPOnboardingPackage.zip to remote host
+    #   copy:
+    #     src: ~/WindowsDefenderATPOnboardingPackage.zip
+    #     dest: /tmp/WindowsDefenderATPOnboardingPackage.zip
+    #   when: not mdatp_onboard.stat.exists
 
+#EXTRA: download the repo containing the zip file
+    - name: Clone the repository into the user's home directory
+      git:
+        repo: 'https://github.com/tewogbadeaa/ms-mdatp.git'
+        dest: '/ms-mdatp'
+        update: yes
+        version: main
+      # become_user: yes
+
+#END EXTRA
 
     - name: Extract WindowsDefenderATPOnboardingPackage.zip into /etc/opt/microsoft/mdatp
       unarchive:
-        src: /tmp/WindowsDefenderATPOnboardingPackage.zip
-        dest: /etc/opt/microsoft/mdatp
-        mode: 0755
-        owner: root
-        group: root
+        src: '/ms-mdatp/WindowsDefenderATPOnboardingPackage.zip'
+        dest: '/etc/opt/microsoft/mdatp'
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        remote_src: yes
       when: not mdatp_onboard.stat.exists
 
     # - name: Change ownership of MDATP directories to ansible
@@ -115,21 +144,6 @@
     #     url: https://packages.microsoft.com/keys/microsoft.asc
     #     state: present
     #   when: ansible_os_family == "Debian"
-
-    - name: Add Microsoft apt repository for MDATP
-      apt_repository:
-        repo: "deb [arch=arm64,armhf,amd64] https://packages.microsoft.com/ubuntu/20.04/prod focal main"
-        update_cache: yes
-        state: present
-        filename: "microsoft-prod"
-      when: ansible_os_family == "Debian"
-
-    - name: Add Microsoft APT repository
-      apt_repository:
-        repo: deb [arch=amd64] https://packages.microsoft.com/debian/10/prod buster main
-        update_cache: yes
-        state: present
-      when: ansible_os_family == "Debian"
 
     - name: Install mdatp
       apt:
