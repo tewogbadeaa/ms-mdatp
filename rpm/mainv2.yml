@@ -110,8 +110,6 @@
         version: main
       # become_user: yes
 
-#END EXTRA
-
     - name: Extract WindowsDefenderATPOnboardingPackage.zip into /etc/opt/microsoft/mdatp
       unarchive:
         src: '/ms-mdatp/WindowsDefenderATPOnboardingPackage.zip'
@@ -120,6 +118,20 @@
         group: '{{ ansible_user }}'
         remote_src: yes
       when: not mdatp_onboard.stat.exists
+#END EXTRA
+
+    # - name: Copy ZIP file from control node to target server
+    #   copy:
+    #     src: /path/to/local/file.zip
+    #     dest: /remote/path/on/target/file.zip
+    #     mode: '0644'
+
+    # - name: Extract the ZIP file on the target server
+    #   unarchive:
+    #     src: /remote/path/on/target/file.zip
+    #     dest: /remote/extracted/destination/
+    #     remote_src: yes
+    #     creates: /remote/extracted/destination/some_file_from_zip
 
 #Install mdatp
     - name: Install Microsoft Defender for Endpoint
