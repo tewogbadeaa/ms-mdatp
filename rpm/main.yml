@@ -114,7 +114,7 @@
 
     - name: Extract WindowsDefenderATPOnboardingPackage.zip into /etc/opt/microsoft/mdatp
       unarchive:
-        src: '/ms-mdatp/WindowsDefenderATPOnboardingPackageNew.zip'
+        src: '/ms-mdatp/WindowsDefenderATPOnboardingPackage.zip'
         dest: '/etc/opt/microsoft/mdatp'
         owner: '{{ ansible_user }}'
         group: '{{ ansible_user }}'
